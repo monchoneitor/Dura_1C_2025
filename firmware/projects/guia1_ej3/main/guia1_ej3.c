@@ -32,7 +32,7 @@
 #include "led.h"
 #include "switch.h"
 /*==================[macros and definitions]=================================*/
-#define CONFIG_BLINK_PERIOD 1000
+#define CONFIG_BLINK_PERIOD 100
 
 struct leds
 {
@@ -41,95 +41,95 @@ struct leds
 	uint8_t n_ciclos; 	//indica la cantidad de ciclos de encendido/apagado
 	uint16_t periodo;   //indica el tiempo de cada ciclo
 } my_leds;
+
+
 /*==================[internal data definition]===============================*/
 
 /*==================[internal functions declaration]=========================*/
+void ledWork(struct leds);
 
 /*==================[external functions definition]==========================*/
-void app_main(void){
+void app_main(void)
+{
 	uint8_t teclas;
 	LedsInit();
 	SwitchesInit();
-	struct leds sLed;
-	sLed.mode = 0;
-	sLed.n_led = 0;
-    
-	while(1)    {
-    	teclas  = SwitchesRead();
-    	switch(teclas){
-    		case SWITCH_1:
-				if(sLed.n_led < 2)
-				{
-					sLed.n_led++;
-				}
-				else 
-				{
-					sLed.n_led = 0;
-				}
-    		break;
+	struct leds pLed1, pLed2, pLed3;
 
-    		case SWITCH_2:
-				if(sLed.mode < 2)
-				{
-					sLed.mode++;
-				}
-				else 
-				{
-					sLed.mode = 0;
-				}
-			break;
+	pLed1.n_ciclos = 5;
+	pLed1.n_led = 0;
+	pLed1.mode = 0;	
+	pLed2.n_ciclos = 5;
+	pLed2.n_led = 1;
+	pLed2.mode = 1;	
+	pLed3.n_ciclos = 10;
+	pLed3.n_led = 2;
+	pLed3.mode = 2;	
+	pLed3.periodo = 250;
 
-			case SWITCH_1 & SWITCH_2:
-				if(sLed.n_led == 0)
-				{
-					if(sLed.mode == 0)
-					{
-						LedOff(LED_1);
-					}
-					else if(sLed.mode == 1)
-					{
-						LedOn(LED_1);
-					}
-					else if(sLed.mode == 2)
-					{
-						LedToggle(LED_1);
-					}
-				}
-				else if(sLed.n_led == 1)
-				{
-					if(sLed.mode == 0)
-					{
-						LedOff(LED_2);
-					}
-					else if(sLed.mode == 1)
-					{
-						LedOn(LED_2);
-					}
-					else if(sLed.mode == 2)
-					{
-						LedToggle(LED_2);
-					}
-				}
-				else if(sLed.n_led == 2)
-				{
-					if(sLed.mode == 0)
-					{
-						LedOff(LED_3);
-					}
-					else if(sLed.mode == 1)
-					{
-						LedOn(LED_3);
-					}
-					else if(sLed.mode == 2)
-					{
-						LedToggle(LED_3);
-					}
-				}				
+	//ledWork(pLed1);
+	//ledWork(pLed2);
+	//ledWork(pLed3);
+
+	struct leds* puntLed = &pLed2;
+
+	while(1)
+	{
+		teclas = SwitchesRead();
+		switch(teclas)
+		{
+			case SWITCH_1:
+				LedsOffAll();
+				printf("Led1Task\n");
+				ledWork(pLed1);
 			break;
-    	}
+			case SWITCH_2:
+				LedsOffAll();
+				printf("Led2Task\n");
+				ledWork(pLed2);
+			break;
+			case SWITCH_1 | SWITCH_2:
+				LedsOffAll();
+				printf("Led3Task\n");
+				ledWork(pLed3);
+			break;
+		}
 		vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
 	}
+}
 
-	
+void ledWork(struct leds pLed)
+{
+	led_t puntLed = LED_1;
+	if(pLed.n_led == 0)
+	{
+		puntLed = LED_1;
+	}
+	else if(pLed.n_led == 1)
+	{
+		puntLed = LED_2;
+	}
+	else if(pLed.n_led == 2)
+	{
+		puntLed = LED_3;
+	}
+
+	if (pLed.mode == 0)
+	{
+		LedOn(puntLed);
+	}
+	else if(pLed.mode == 1)
+	{
+		LedOff(puntLed);
+	}
+	else if(pLed.mode == 2)
+	{
+		for(int i=0; i<( 2 * pLed.n_ciclos );i++)
+		{
+			LedToggle(puntLed);
+			vTaskDelay(pLed.periodo / portTICK_PERIOD_MS);
+		}
+		LedOff(puntLed);
+	}
 }
 /*==================[end of file]============================================*/
