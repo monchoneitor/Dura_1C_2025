@@ -1,10 +1,11 @@
-/*! @mainpage Template
+/*! @mainpage guia1_ej3
  *
  * @section genDesc General Description
  *
- * This section describes how the program works.
+ * El programa genera que cuando se presione el Boton 1 el Led 1 se encienda, cuando se presione el
+ * Boton 2 el Led 2 se apague y cuando se presionen el Boton 1 y Boton 2 al mismo tiempo el Led 3 
+ * parpadee durante un periodo de tiempo.
  *
- * <a href="https://drive.google.com/...">Operation Example</a>
  *
  * @section hardConn Hardware Connection
  *
@@ -19,8 +20,8 @@
  * |:----------:|:-----------------------------------------------|
  * | 12/09/2023 | Document creation		                         |
  *
- * @author Albano Peñalva (albano.penalva@uner.edu.ar)
- *
+ * @author Simon Pedro Dura (sipedura@gmail.com)
+ * 
  */
 
 /*==================[inclusions]=============================================*/
@@ -34,6 +35,11 @@
 /*==================[macros and definitions]=================================*/
 #define CONFIG_BLINK_PERIOD 100
 
+/**
+ * @def leds
+ * @brief Struct que almacena los datos correspondiente a un led, los mismos son su modo,
+ *  numero de led, numero de ciclos de encendido/apagado y el periodo del ciclo. 
+ */
 struct leds
 {
     uint8_t mode;       //OFF (0), ON (1), TOGGLE(3)
@@ -46,6 +52,12 @@ struct leds
 /*==================[internal data definition]===============================*/
 
 /*==================[internal functions declaration]=========================*/
+/** @fn void ledWork(struct leds)
+ * @brief Funcion que recibe un struct led y dependiendo el modo del mismo enciende,
+ * apaga o hace parpadear el led
+ * @param leds struct led que almacena las variables del led.
+ * @return
+ */
 void ledWork(struct leds);
 
 /*==================[external functions definition]==========================*/
@@ -66,10 +78,6 @@ void app_main(void)
 	pLed3.n_led = 2;
 	pLed3.mode = 2;	
 	pLed3.periodo = 250;
-
-	//ledWork(pLed1);
-	//ledWork(pLed2);
-	//ledWork(pLed3);
 
 	struct leds* puntLed = &pLed2;
 

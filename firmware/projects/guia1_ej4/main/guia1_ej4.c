@@ -19,7 +19,7 @@
  * |:----------:|:-----------------------------------------------|
  * | 12/09/2023 | Document creation		                         |
  *
- * @author Albano Peñalva (albano.penalva@uner.edu.ar)
+ * @author Simon Pedro Dura (sipedura@gmail.com)
  *
  */
 
@@ -34,6 +34,14 @@
 /*==================[internal data definition]===============================*/
 
 /*==================[internal functions declaration]=========================*/
+/** @fn int8_t  convertToBcdArray (uint32_t data, uint8_t digits, uint8_t * bcd_number)
+ * @brief Funcion que recibe un entero de 32 bits y lo transforma en un un numero BCD almacenado cifra a cifra
+ * en un array
+ * @param data Valor uint32_t que contiene el entero de 32 bits
+ * @param digits Valor uint8_t que almacena la cantidad de digitos del entero de 32 bits
+ * @param bcd_number Puntero a un arreglo de valores uint8_t donde se almacenara el numero BCD
+ * @return 0
+ */
 int8_t  convertToBcdArray (uint32_t data, uint8_t digits, uint8_t * bcd_number){
 	digits--;
 	for(int i=0; i<=digits; i++)
