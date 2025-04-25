@@ -20,8 +20,7 @@
  *
  * |   Date	    | Description                                    |
  * |:----------:|:-----------------------------------------------|
- * | 11/04/2024 | Document creation		                         |
- * | 25/04/2024 | Se completan los ejercicios                    |
+ * | 25/04/2024 | Document creation		                         |
  *
  * @author Simon Pedro Dura (sipedura@gmail.com)
  *
@@ -35,18 +34,19 @@
 #include "freertos/task.h"
 #include "led.h"
 #include "switch.h"
+#include "timer_mcu.h"
 #include "hc_sr04.h"
 #include "lcditse0803.h"
 /*==================[macros and definitions]=================================*/
-
+#define CONFIG_REFRESH_PERIOD_DISTANCE_US 1000000
 /*==================[internal data definition]===============================*/
 uint16_t distancia = 0;
 bool medir = true;
 bool hold = false;
-uint8_t teclas;
 TaskHandle_t medir_task_handle = NULL;
 TaskHandle_t mostrar_task_handle = NULL;
 TaskHandle_t teclas_task_handle = NULL;
+
 /*==================[internal functions declaration]=========================*/
 void inits()
 {
@@ -54,17 +54,25 @@ void inits()
 	LcdItsE0803Init();
 	LedsInit();
 	SwitchesInit();
+	SwitchActivInt(SWITCH_1, &funcionTecla1, NULL);
+	SwitchActivInt(SWITCH_2, &funcionTecla2, NULL);
+}
+
+static void funcionTimerA(void *pvParameter)
+{
+	vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);
 }
 
 static void medirDistancia(void *pvParameter)
 {
 	while(1)
 	{
+		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 		if(medir)
 		{
 			distancia = HcSr04ReadDistanceInCentimeters();
 		}
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
+		vTaskNotifyGiveFromISR(mostrar_task_handle, pdFALSE);
 	}
 }
 
@@ -72,6 +80,7 @@ static void mostrarDistancia(void *pvParameter)
 {	
 	while(1)
 	{
+		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 		if(!hold)
 		{
 			LcdItsE0803Write(distancia);	
@@ -97,35 +106,34 @@ static void mostrarDistancia(void *pvParameter)
 				LedOn(LED_2);
 				LedOn(LED_3);
 		}		
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
 	}
 }
 
-static void funcionTeclas(void *pvParameter)
+static void funcionTecla1(void *pvParameter)
 {
-	while(1)
-	{
-		teclas = SwitchesRead();
-		switch(teclas)
-		{
-			case(SWITCH_1):
-				medir = !medir;
-			break;
-			case(SWITCH_2):
-				hold = !hold;
-			break;
-		}
-		vTaskDelay(1000/portTICK_PERIOD_MS);
-	}
+	medir = !medir;
 }
 
-
+static void funcionTecla2(void *pvParameter)
+{
+	hold = !hold;
+}
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
 	inits();
+	
+	timer_config_t timer_led_1 = {
+        .timer = TIMER_A,
+        .period = CONFIG_REFRESH_PERIOD_DISTANCE_US,
+        .func_p = funcionTimerA,
+        .param_p = NULL
+    };
+    TimerInit(&timer_led_1);
+
 	xTaskCreate(&medirDistancia, "Medir", 2048, NULL, 5, &medir_task_handle);
 	xTaskCreate(&mostrarDistancia, "Mostrar", 512, NULL, 5, &mostrar_task_handle);
-	xTaskCreate(&funcionTeclas, "Teclas", 512, NULL, 5, &teclas_task_handle);
+	
+	TimerStart(timer_led_1.timer);
 }
 /*==================[end of file]============================================*/
