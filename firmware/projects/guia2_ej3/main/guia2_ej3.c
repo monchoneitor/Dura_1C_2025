@@ -47,7 +47,6 @@ bool hold = false;
 TaskHandle_t medir_task_handle = NULL;
 TaskHandle_t mostrar_task_handle = NULL;
 TaskHandle_t teclas_task_handle = NULL;
-
 /*==================[internal functions declaration]=========================*/
 static void funcionTimerA(void *pvParameter)
 {
@@ -155,7 +154,7 @@ void app_main(void)
 		.baud_rate = 9600,
 		.func_p = funcionUARTRead,
 		.param_p = NULL};
-
+		
 	UartInit(&uartLeer);
 
 	xTaskCreate(&medirDistancia, "Medir", 512, NULL, 5, &medir_task_handle);
