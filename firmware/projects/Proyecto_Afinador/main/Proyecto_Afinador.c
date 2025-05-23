@@ -29,9 +29,10 @@
 #include <stdbool.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "dsp"
+#include "iir_filter.h"
+#include "fft.h"
 /*==================[macros and definitions]=================================*/
-
+#define SAMPLE_FREQ	200
 /*==================[internal data definition]===============================*/
 
 /*==================[internal functions declaration]=========================*/
