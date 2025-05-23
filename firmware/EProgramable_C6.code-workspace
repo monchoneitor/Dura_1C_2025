@@ -41,6 +41,12 @@
         },
         {
             "path": "projects/guia2_ej4"
+        },
+        {
+            "path": "projects/Proyecto_Afinador"
+        },
+        {
+            "path": "projects/ej_dsp"
         }
     ],
     "settings": {
@@ -96,7 +102,12 @@
             "soc_caps.h": "c",
             "mpu6050.h": "c",
             "i2c_mcu.h": "c",
-            "stdio.h": "c"
+            "stdio.h": "c",
+            "esp_dsp.h": "c",
+            "dsps_biquad.h": "c",
+            "dsps_fir.h": "c",
+            "dsps_dotprod.h": "c",
+            "fft.h": "c"
         },
     },
     "tasks": {
