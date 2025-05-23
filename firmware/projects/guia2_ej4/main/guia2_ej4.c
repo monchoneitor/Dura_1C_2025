@@ -10,13 +10,11 @@
  *
  * @section hardConn Hardware Connection
  *
- * |    Peripheral  |   ESP32   	|
+ * |    Function  |   ESP32   	|
  * |:--------------:|:--------------|
- * | 	CH1	 	| 	GPIO21		|
- * | 	CH0	 	| 	GPIO20		|
- * | 	+3,3V	 	| 	+3,3V		|
- * | 	GND	 	| 	GND		|
- *
+ * | 	Entrada Analogica	 	| 	GPIO1		|
+ * | 	Salida Analogica	 	| 	GPIO0		|
+ * 
  * @section changelog Changelog
  *
  * |   Date	    | Description                                    |
