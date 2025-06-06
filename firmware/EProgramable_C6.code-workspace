@@ -47,6 +47,12 @@
         },
         {
             "path": "projects/ej_dsp"
+        },
+        {
+            "path": "projects/ej_bluetooth_ledrgb"
+        },
+        {
+            "path": "projects/ej_bluetooth_fft"
         }
     ],
     "settings": {

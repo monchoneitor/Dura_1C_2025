@@ -84,7 +84,7 @@ void read_data(uint8_t * data, uint8_t length){
 void app_main(void){
     static neopixel_color_t color;
     ble_config_t ble_configuration = {
-        "ESP_EDU_1",
+        "ESP_RGB_1",
         read_data
     };
 

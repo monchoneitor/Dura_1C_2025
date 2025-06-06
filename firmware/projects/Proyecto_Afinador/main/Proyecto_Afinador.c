@@ -156,6 +156,11 @@ void app_main(void)
         .param_p = NULL};
     UartInit(&pUart);
 
+    ble_config_t ble_configuration = {
+        "ESP_AFINADOR",
+        BLE_NO_INT};
+    BleInit(&ble_configuration);
+
     xTaskCreate(&analizarAudio, "Analizar", 2048, NULL, 5, &analizar_task_handle);
 
     TimerStart(TIMER_A);
