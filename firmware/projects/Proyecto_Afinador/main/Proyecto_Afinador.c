@@ -41,7 +41,7 @@
 #define CONFIG_REFRESH_PERIOD_DISTANCE_US_A 303    // Timer que muestrea a frec de 3300hz
 #define CONFIG_REFRESH_PERIOD_DISTANCE_US_B 500000 // Timer que reinicia cada segundo
 /*==================[internal data definition]===============================*/
-float audio[BUFFER_SIZE];
+float audio[BUFFER_SIZE] = {0};
 float audio_filt[BUFFER_SIZE];
 float audio_fft[BUFFER_SIZE / 2];
 float vector_frec[BUFFER_SIZE / 2];
@@ -54,11 +54,12 @@ TaskHandle_t analizar_task_handle = NULL;
 /*==================[internal functions declaration]=========================*/
 static void micGrabar(void *pvParameter)
 {
+    uint16_t tension;
     if (contador < BUFFER_SIZE)
     {
-        AnalogInputReadSingle(CH1, &audio[contador]);
+        AnalogInputReadSingle(CH1, &tension);
+        audio[contador] = tension;
         contador++;
-        printf("l");
     }
     else if (contador == BUFFER_SIZE)
     {
@@ -148,7 +149,14 @@ void app_main(void)
     };
     AnalogInputInit(&input_Analog);
 
-    xTaskCreate(&analizarAudio, "Analizar", 1024, NULL, 5, &analizar_task_handle);
+    serial_config_t pUart = {
+        .port = UART_PC,
+        .baud_rate = 230400,
+        .func_p = NULL,
+        .param_p = NULL};
+    UartInit(&pUart);
+
+    xTaskCreate(&analizarAudio, "Analizar", 2048, NULL, 5, &analizar_task_handle);
 
     TimerStart(TIMER_A);
 }
