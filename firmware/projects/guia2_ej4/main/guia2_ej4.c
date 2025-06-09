@@ -140,7 +140,6 @@ void analogOutputEscribir()
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
-
 	timer_config_t timerA = {
 		.timer = TIMER_A,
 		.period = CONFIG_REFRESH_PERIOD_DISTANCE_US,

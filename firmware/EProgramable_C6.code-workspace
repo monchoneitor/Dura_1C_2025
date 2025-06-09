@@ -53,6 +53,9 @@
         },
         {
             "path": "projects/ej_bluetooth_fft"
+        },
+        {
+            "path": "projects/Estacion_monitoreo"
         }
     ],
     "settings": {
