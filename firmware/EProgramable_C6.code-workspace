@@ -117,7 +117,8 @@
             "dsps_fir.h": "c",
             "dsps_dotprod.h": "c",
             "fft.h": "c",
-            "iir_filter.h": "c"
+            "iir_filter.h": "c",
+            "ble_mcu.h": "c"
         },
     },
     "tasks": {

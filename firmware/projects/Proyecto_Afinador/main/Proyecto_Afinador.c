@@ -27,7 +27,7 @@
  * | 30/05/2025 | muestreo, análisis y comparación del audio     |
  * | 13/06/2025 | Se agreganm las funciones para interactuar     |
  * | 13/06/2025 | con el dispositivo bluetooth                   |
- * 
+ *
  * @author Simon Pedro Dura (sipedura@gmail.com)
  *
  */
@@ -40,8 +40,10 @@
 #include "freertos/task.h"
 #include "iir_filter.h"
 #include "fft.h"
+#include "uart_mcu.h"
 #include "timer_mcu.h"
 #include "analog_io_mcu.h"
+#include "ble_mcu.h"
 /*==================[macros and definitions]=================================*/
 /** @def BUFFER_SIZE
  * @brief Tamaño del buffer donde se almacena el audio muestreado.
@@ -105,7 +107,7 @@ static void micGrabar()
     }
     else if (contador == BUFFER_SIZE)
     {
-        vTaskNotifyGiveFromISR(analizar_task_handle, pdFALSE);
+        vTaskNotifyGiveFromISR(analizar_task_handle, pdFALSE);    
         TimerStop(TIMER_A);
     }
 }
@@ -122,6 +124,7 @@ static void enviarDatos(int paramComparacion)
     {
         /* Enciende el led Amarillo y apaga el resto.
          */
+        //UartSendString(UART_PC, "A");
         BleSendString("*AR255G255B0");
         BleSendString("*VR0G0B0");
         BleSendString("*RR0G0B0");
@@ -130,6 +133,7 @@ static void enviarDatos(int paramComparacion)
     {
         /* Enciende el led Verde y apaga el resto.
          */
+        //UartSendString(UART_PC, "B");
         BleSendString("*AR0G0B0");
         BleSendString("*VR0G255B0");
         BleSendString("*RR0G0B0");
@@ -138,10 +142,12 @@ static void enviarDatos(int paramComparacion)
     {
         /* Enciende el led Rojo y apaga el resto.
          */
+        //UartSendString(UART_PC, "D");
         BleSendString("*AR0G0B0");
         BleSendString("*VR0G0B0");
         BleSendString("*RR255G0B0");
     }
+    //UartSendString(UART_PC, "\n");
 }
 
 /** @fn static void compararMagnitud()
@@ -195,20 +201,15 @@ static void analizarAudio()
         TimerStart(TIMER_A);
     }
 }
-
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
-    LowPassInit(SAMPLE_FREQ, frecPBajo, ORDER_4);
-    HiPassInit(SAMPLE_FREQ, frecPAlto, ORDER_4);
-    FFTInit();
 
     timer_config_t timerA = {
         .timer = TIMER_A,
         .period = CONFIG_REFRESH_PERIOD_DISTANCE_US_A,
         .func_p = micGrabar,
         .param_p = NULL};
-    TimerInit(&timerA);
 
     analog_input_config_t input_Analog = {
         .input = CH1,
@@ -217,14 +218,29 @@ void app_main(void)
         .param_p = NULL,
         .sample_frec = 0,
     };
-    AnalogInputInit(&input_Analog);
 
     ble_config_t ble_configuration = {
-        "ESP_AFINADOR",
+        "Afinador_ESP",
         BLE_NO_INT};
+
     BleInit(&ble_configuration);
 
-    xTaskCreate(&analizarAudio, "Analizar", 2048, NULL, 5, &analizar_task_handle);
+    serial_config_t pUart = {
+		.port = UART_PC,
+		.baud_rate = 115200,
+		.func_p = NULL,
+		.param_p = NULL};
+	UartInit(&pUart);
+    
+    TimerInit(&timerA);
+
+    AnalogInputInit(&input_Analog);
+
+    LowPassInit(SAMPLE_FREQ, frecPBajo, ORDER_4);
+    HiPassInit(SAMPLE_FREQ, frecPAlto, ORDER_4);
+    FFTInit();
+
+    xTaskCreate(&analizarAudio, "Analizar", 8192, NULL, 5, &analizar_task_handle);
 
     TimerStart(TIMER_A);
 }
