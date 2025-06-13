@@ -2,7 +2,9 @@
  *
  * @section genDesc General Description
  *
- * This section describes how the program works.
+ * Este programa recibe una señal de audio de una cuerda de guitarra mediante un microfono analógico por medio de su conversor analógico digital,
+ * guarda la señal recibida, la analiza, aplica Transformada Rapida de Fourier, compara con el valor de frecuencia a la que deberia de estar afinada
+ * la misma y enciende un led en la app bluetooth electronics dependiendo de si se debe ajustar o desajustar o si se encuentra afinada.-
  *
  * <a href="https://drive.google.com/...">Operation Example</a>
  *
@@ -10,7 +12,10 @@
  *
  * |    Peripheral  |   ESP32   	|
  * |:--------------:|:--------------|
- * | 	PIN_X	 	| 	GPIO_X		|
+ * | 	+5V	 	| 	+5V		|
+ * | 	+3,3V	 	| 	+3,3V		|
+ * | 	GND	 	| 	GND		|
+ * | 	Entrada Analogica	 	| 	GPIO_1		|
  *
  *
  * @section changelog Changelog
@@ -18,7 +23,11 @@
  * |   Date	    | Description                                    |
  * |:----------:|:-----------------------------------------------|
  * | 23/05/2025 | Document creation		                         |
- *
+ * | 30/05/2025 | Se agregan las funciones correspondientes al   |
+ * | 30/05/2025 | muestreo, análisis y comparación del audio     |
+ * | 13/06/2025 | Se agreganm las funciones para interactuar     |
+ * | 13/06/2025 | con el dispositivo bluetooth                   |
+ * 
  * @author Simon Pedro Dura (sipedura@gmail.com)
  *
  */
@@ -32,28 +41,61 @@
 #include "iir_filter.h"
 #include "fft.h"
 #include "timer_mcu.h"
-#include "uart_mcu.h"
 #include "analog_io_mcu.h"
 /*==================[macros and definitions]=================================*/
+/** @def BUFFER_SIZE
+ * @brief Tamaño del buffer donde se almacena el audio muestreado.
+ */
 #define BUFFER_SIZE 1650
-#define FIRST_STRING_FREQ 330
-#define SAMPLE_FREQ 3300                           // La frecuencia de afinacion de la primera cuerda de la guitarra (Mi agudo) es 329,63, se muestra a 10 veces la frec
-#define CONFIG_REFRESH_PERIOD_DISTANCE_US_A 303    // Timer que muestrea a frec de 3300hz
-#define CONFIG_REFRESH_PERIOD_DISTANCE_US_B 500000 // Timer que reinicia cada segundo
+/** @def SAMPLE_FREQ
+ * @brief Valor del periodo de la frecuencia de muestreo.
+ */
+#define SAMPLE_FREQ 3300
+/** @def CONFIG_REFRESH_PERIOD_DISTANCE_US_A
+ * @brief Valor del periodo de refresco del timer A que muestrea a 3300 Hz.
+ */
+#define CONFIG_REFRESH_PERIOD_DISTANCE_US_A 303
 /*==================[internal data definition]===============================*/
+/* Arreglo de flotantes donde se almacena el audio muestreado.
+ */
 float audio[BUFFER_SIZE] = {0};
+/* Arreglo de flotantes donde se almacena el audio filtrado.
+ */
 float audio_filt[BUFFER_SIZE];
+/* Arreglo de flotantes donde se almacena la FFT del audio filtrado.
+ */
 float audio_fft[BUFFER_SIZE / 2];
+/* Arreglo de flotantes donde se almacena el vector de frecuencias del audio filtrado.
+ */
 float vector_frec[BUFFER_SIZE / 2];
+/* Valor flotante que corresponde a la frecuencia de afinado de la primera cuerda.
+ */
 float frecPrimeraCuerda = 330;
+/* Valor entero que corresponde a la frecuencia del filtro pasa bajo.
+ */
 int frecPBajo = 360;
+/* Valor entero que corresponde a la frecuencia del filtro pasa alto.
+ */
 int frecPAlto = 300;
+/* Valor entero que corresponde a la tolerancia de afinado.
+ */
 int tolerancia = 10;
+/* Valor entero que se utilizará para contar las muestras tomadas.
+ */
 int contador = 0;
+/* TaskHandle_t que se utilizará para notificar la tarea analizar.
+ */
 TaskHandle_t analizar_task_handle = NULL;
 /*==================[internal functions declaration]=========================*/
-static void micGrabar(void *pvParameter)
+/** @fn static void micGrabar()
+ * @brief Funcion que se encarga de muestrear de la señal analógica recibida el audio y posteriormente
+ * notifica a la funcion analizar para iniciar el análisis de la señal deteniendo el timer.
+ * @return
+ */
+static void micGrabar()
 {
+    /* Valor uint16_t que se utiliza para obtener el valor de tension del CAD en el CH1.
+     */
     uint16_t tension;
     if (contador < BUFFER_SIZE)
     {
@@ -68,22 +110,45 @@ static void micGrabar(void *pvParameter)
     }
 }
 
+/** @fn static void enviarDatos(int paramComparacion)
+ * @brief Funcion que envia al receptor bluetooth un mensaje que enciende un led dependiendo el parámetro
+ * de comparación recibido.
+ * @param paramComparacion Valor entero que se utilizará para decidir que led encender.
+ * @return
+ */
 static void enviarDatos(int paramComparacion)
 {
     if (paramComparacion == 0)
     {
-        // printf("ajustar");
+        /* Enciende el led Amarillo y apaga el resto.
+         */
+        BleSendString("*AR255G255B0");
+        BleSendString("*VR0G0B0");
+        BleSendString("*RR0G0B0");
     }
     else if (paramComparacion == 1)
     {
-        // printf("afinado");
+        /* Enciende el led Verde y apaga el resto.
+         */
+        BleSendString("*AR0G0B0");
+        BleSendString("*VR0G255B0");
+        BleSendString("*RR0G0B0");
     }
     else if (paramComparacion == 2)
     {
-        // printf("desajustar");
+        /* Enciende el led Rojo y apaga el resto.
+         */
+        BleSendString("*AR0G0B0");
+        BleSendString("*VR0G0B0");
+        BleSendString("*RR255G0B0");
     }
 }
 
+/** @fn static void compararMagnitud()
+ * @brief Funcion que compara las frecuencias obtenidas de la FFT del audio filtrado con la frecuencia de afinación esperada
+ * para la primer cuerda de la guitarra y posteriormente llama a la funcion para enviar los datos al receptor bluetooth.
+ * @return
+ */
 static void compararMagnitud()
 {
     float frecMax = vector_frec[0];
@@ -111,7 +176,12 @@ static void compararMagnitud()
     }
 }
 
-static void analizarAudio(void *pvParameter)
+/** @fn static void analizarAudio()
+ * @brief Funcion que aplica el fitro pasa bajo y pasa alto, obtiene el vector de frecuencias y las magnitudes por medio de la FFT y las almacena para
+ * posteriormente llamar a la función compararMagnitud, reiniciar el contador e iniciar el timer.
+ * @return
+ */
+static void analizarAudio()
 {
     while (1)
     {
@@ -148,13 +218,6 @@ void app_main(void)
         .sample_frec = 0,
     };
     AnalogInputInit(&input_Analog);
-
-    serial_config_t pUart = {
-        .port = UART_PC,
-        .baud_rate = 230400,
-        .func_p = NULL,
-        .param_p = NULL};
-    UartInit(&pUart);
 
     ble_config_t ble_configuration = {
         "ESP_AFINADOR",
