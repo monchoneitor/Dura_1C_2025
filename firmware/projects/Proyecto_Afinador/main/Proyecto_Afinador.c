@@ -25,8 +25,10 @@
  * | 23/05/2025 | Document creation		                         |
  * | 30/05/2025 | Se agregan las funciones correspondientes al   |
  * | 30/05/2025 | muestreo, análisis y comparación del audio     |
- * | 13/06/2025 | Se agreganm las funciones para interactuar     |
+ * | 13/06/2025 | Se agregan las funciones para interactuar      |
  * | 13/06/2025 | con el dispositivo bluetooth                   |
+ * | 16/06/2025 | Se agregan comentadas lineas para transmision  |
+ * | 13/06/2025 | de datos por UART en caso de fallar Bluetooth  |
  *
  * @author Simon Pedro Dura (sipedura@gmail.com)
  *
@@ -85,6 +87,9 @@ int tolerancia = 10;
 /* Valor entero que se utilizará para contar las muestras tomadas.
  */
 int contador = 0;
+/* Valor uint16_t que se utiliza para obtener el valor de tension del CAD en el CH1.
+ */
+uint16_t tension = 0;
 /* TaskHandle_t que se utilizará para notificar la tarea analizar.
  */
 TaskHandle_t analizar_task_handle = NULL;
@@ -96,9 +101,6 @@ TaskHandle_t analizar_task_handle = NULL;
  */
 static void micGrabar()
 {
-    /* Valor uint16_t que se utiliza para obtener el valor de tension del CAD en el CH1.
-     */
-    uint16_t tension;
     if (contador < BUFFER_SIZE)
     {
         AnalogInputReadSingle(CH1, &tension);
@@ -107,7 +109,7 @@ static void micGrabar()
     }
     else if (contador == BUFFER_SIZE)
     {
-        vTaskNotifyGiveFromISR(analizar_task_handle, pdFALSE);    
+        vTaskNotifyGiveFromISR(analizar_task_handle, pdFALSE);
         TimerStop(TIMER_A);
     }
 }
@@ -124,7 +126,9 @@ static void enviarDatos(int paramComparacion)
     {
         /* Enciende el led Amarillo y apaga el resto.
          */
-        //UartSendString(UART_PC, "A");
+        // UartSendString(UART_PC, "*AR255G255B0\n");
+        // UartSendString(UART_PC, "*VR0G0B0\n");
+        // UartSendString(UART_PC, "*RR0G0B0\n");
         BleSendString("*AR255G255B0");
         BleSendString("*VR0G0B0");
         BleSendString("*RR0G0B0");
@@ -133,7 +137,9 @@ static void enviarDatos(int paramComparacion)
     {
         /* Enciende el led Verde y apaga el resto.
          */
-        //UartSendString(UART_PC, "B");
+        // UartSendString(UART_PC, "*AR0G0B0\n")
+        // UartSendString(UART_PC, "*VR0G255B0\n")
+        // UartSendString(UART_PC, "*RR0G0B0\n")
         BleSendString("*AR0G0B0");
         BleSendString("*VR0G255B0");
         BleSendString("*RR0G0B0");
@@ -142,12 +148,13 @@ static void enviarDatos(int paramComparacion)
     {
         /* Enciende el led Rojo y apaga el resto.
          */
-        //UartSendString(UART_PC, "D");
+        // UartSendString(UART_PC, "*AR0G0B0\n")
+        // UartSendString(UART_PC, "*VR0G0B0\n")
+        // UartSendString(UART_PC, "*RR255G0B0\n")
         BleSendString("*AR0G0B0");
         BleSendString("*VR0G0B0");
         BleSendString("*RR255G0B0");
     }
-    //UartSendString(UART_PC, "\n");
 }
 
 /** @fn static void compararMagnitud()
@@ -216,22 +223,22 @@ void app_main(void)
         .mode = ADC_SINGLE,
         .func_p = NULL,
         .param_p = NULL,
-        .sample_frec = 0,
-    };
+        .sample_frec = 0};
 
     ble_config_t ble_configuration = {
         "Afinador_ESP",
         BLE_NO_INT};
 
+    serial_config_t pUart = {
+        .port = UART_PC,
+        .baud_rate = 230400,
+        .func_p = NULL,
+        .param_p = NULL};
+
     BleInit(&ble_configuration);
 
-    serial_config_t pUart = {
-		.port = UART_PC,
-		.baud_rate = 115200,
-		.func_p = NULL,
-		.param_p = NULL};
-	UartInit(&pUart);
-    
+    UartInit(&pUart);
+
     TimerInit(&timerA);
 
     AnalogInputInit(&input_Analog);
