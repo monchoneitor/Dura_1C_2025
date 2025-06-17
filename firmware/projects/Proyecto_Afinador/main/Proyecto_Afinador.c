@@ -122,6 +122,12 @@ static void micGrabar()
  */
 static void enviarDatos(int paramComparacion)
 {
+    //char msg[25];
+    //for(int16_t i=0; i<825; i++){
+    //        /* Formato de datos para que sean graficados en la aplicación móvil */
+    //        sprintf(msg, "*HX%2.2fY%2.2f*\n", vector_frec[i], audio_fft[i]);
+    //        BleSendString(msg);
+    //    }
     if (paramComparacion == 0)
     {
         /* Enciende el led Amarillo y apaga el resto.
@@ -129,6 +135,7 @@ static void enviarDatos(int paramComparacion)
         // UartSendString(UART_PC, "*AR255G255B0\n");
         // UartSendString(UART_PC, "*VR0G0B0\n");
         // UartSendString(UART_PC, "*RR0G0B0\n");
+        BleSendString("*Amarillo");
         BleSendString("*AR255G255B0");
         BleSendString("*VR0G0B0");
         BleSendString("*RR0G0B0");
@@ -140,6 +147,7 @@ static void enviarDatos(int paramComparacion)
         // UartSendString(UART_PC, "*AR0G0B0\n")
         // UartSendString(UART_PC, "*VR0G255B0\n")
         // UartSendString(UART_PC, "*RR0G0B0\n")
+        BleSendString("*Verde");
         BleSendString("*AR0G0B0");
         BleSendString("*VR0G255B0");
         BleSendString("*RR0G0B0");
@@ -151,6 +159,7 @@ static void enviarDatos(int paramComparacion)
         // UartSendString(UART_PC, "*AR0G0B0\n")
         // UartSendString(UART_PC, "*VR0G0B0\n")
         // UartSendString(UART_PC, "*RR255G0B0\n")
+        BleSendString("*Rojo");
         BleSendString("*AR0G0B0");
         BleSendString("*VR0G0B0");
         BleSendString("*RR255G0B0");
