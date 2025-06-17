@@ -40,8 +40,8 @@
 #include <stdbool.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "iir_filter.h"
-#include "fft.h"
+#include <iir_filter.h>
+#include <fft.h>
 #include "uart_mcu.h"
 #include "timer_mcu.h"
 #include "analog_io_mcu.h"

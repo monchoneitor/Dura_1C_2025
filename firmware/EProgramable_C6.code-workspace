@@ -56,6 +56,9 @@
         },
         {
             "path": "projects/Estacion_monitoreo"
+        },
+        {
+            "path": "projects/Afinador"
         }
     ],
     "settings": {
