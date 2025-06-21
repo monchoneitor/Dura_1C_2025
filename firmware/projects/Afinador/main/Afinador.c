@@ -50,15 +50,15 @@
 /** @def BUFFER_SIZE
  * @brief Tamaño del buffer donde se almacena el audio muestreado.
  */
-#define BUFFER_SIZE 1650
+#define BUFFER_SIZE 500
 /** @def SAMPLE_FREQ
  * @brief Valor del periodo de la frecuencia de muestreo.
  */
-#define SAMPLE_FREQ 3300
+#define SAMPLE_FREQ 4000
 /** @def CONFIG_REFRESH_PERIOD_DISTANCE_US_A
  * @brief Valor del periodo de refresco del timer A que muestrea a 3300 Hz.
  */
-#define CONFIG_REFRESH_PERIOD_DISTANCE_US_A 303
+#define CONFIG_REFRESH_PERIOD_DISTANCE_US_A 250
 /*==================[internal data definition]===============================*/
 /* Arreglo de flotantes donde se almacena el audio muestreado.
  */
@@ -105,6 +105,9 @@ static void micGrabar()
     {
         AnalogInputReadSingle(CH1, &tension);
         audio[contador] = tension;
+        UartSendString(UART_PC, "$");
+		UartSendString(UART_PC, (char *)UartItoa(audio[contador], 10));
+        UartSendString(UART_PC, ";");
         contador++;
     }
     else if (contador == BUFFER_SIZE)
@@ -122,12 +125,7 @@ static void micGrabar()
  */
 static void enviarDatos(int paramComparacion)
 {
-    //char msg[25];
-    //for(int16_t i=0; i<825; i++){
-    //        /* Formato de datos para que sean graficados en la aplicación móvil */
-    //        sprintf(msg, "*HX%2.2fY%2.2f*\n", vector_frec[i], audio_fft[i]);
-    //        BleSendString(msg);
-    //    }
+    
     if (paramComparacion == 0)
     {
         /* Enciende el led Amarillo y apaga el resto.

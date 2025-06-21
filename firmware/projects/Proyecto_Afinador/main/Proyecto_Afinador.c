@@ -28,7 +28,7 @@
  * | 13/06/2025 | Se agregan las funciones para interactuar      |
  * | 13/06/2025 | con el dispositivo bluetooth                   |
  * | 16/06/2025 | Se agregan comentadas lineas para transmision  |
- * | 13/06/2025 | de datos por UART en caso de fallar Bluetooth  |
+ * | 16/06/2025 | de datos por UART en caso de fallar Bluetooth  |
  *
  * @author Simon Pedro Dura (sipedura@gmail.com)
  *
